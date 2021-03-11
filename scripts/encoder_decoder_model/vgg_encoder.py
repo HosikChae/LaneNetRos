@@ -10,7 +10,10 @@
 """
 from collections import OrderedDict
 
-import tensorflow as tf
+# import tensorflow as tf
+import tensorflow.compat.v1 as tf
+import tensorflow
+tf.disable_v2_behavior()
 
 from encoder_decoder_model import cnn_basenet
 

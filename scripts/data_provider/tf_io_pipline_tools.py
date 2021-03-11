@@ -14,7 +14,10 @@ import os.path as ops
 import cv2
 import glog as log
 import numpy as np
-import tensorflow as tf
+# import tensorflow as tf
+import tensorflow.compat.v1 as tf
+import tensorflow
+tf.disable_v2_behavior()
 
 from config import global_config
 

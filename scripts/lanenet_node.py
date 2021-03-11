@@ -1,20 +1,25 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 # @Author  : Luo Yao
 # @Modified  : AdamShan
 # @Original site    : https://github.com/MaybeShewill-CV/lanenet-lane-detection
 # @File    : lanenet_node.py
 
-
+import pdb
 import time
 import math
-import tensorflow as tf
+# import tensorflow as tf
+import tensorflow.compat.v1 as tf
+import tensorflow
+tf.disable_v2_behavior()
 import numpy as np
 import cv2
 
 from lanenet_model import lanenet
 from lanenet_model import lanenet_postprocess
-from config import global_config
+# from config import global_config
+from local_utils.config_utils import parse_config_utils
+from local_utils.log_util import init_logger
 
 import rospy
 from sensor_msgs.msg import Image
@@ -23,8 +28,9 @@ from cv_bridge import CvBridge, CvBridgeError
 from lane_detector.msg import Lane_Image
 
 
-CFG = global_config.cfg
-
+# CFG = global_config.cfg
+CFG = parse_config_utils.lanenet_cfg
+LOG = init_logger.get_logger(log_file_name_prefix='lanenet_ros')
 
 class lanenet_detector():
     def __init__(self):
@@ -48,25 +54,41 @@ class lanenet_detector():
         '''
 
         self.input_tensor = tf.placeholder(dtype=tf.float32, shape=[1, 256, 512, 3], name='input_tensor')
+
         phase_tensor = tf.constant('test', tf.string)
-        net = lanenet.LaneNet(phase=phase_tensor, net_flag='vgg')
-        self.binary_seg_ret, self.instance_seg_ret = net.inference(input_tensor=self.input_tensor, name='lanenet_model')
+        net = lanenet.LaneNet(phase=phase_tensor, cfg=CFG)
+        self.binary_seg_ret, self.instance_seg_ret = net.inference(input_tensor=self.input_tensor, name='LaneNet')
+        # net = lanenet.LaneNet(phase=phase_tensor, net_flag='vgg')
+        # self.binary_seg_ret, self.instance_seg_ret = net.inference(input_tensor=self.input_tensor, name='lanenet_model')
 
-        # self.cluster = lanenet_cluster.LaneNetCluster()
-        self.postprocessor = lanenet_postprocess.LaneNetPostProcessor()
+        # # self.cluster = lanenet_cluster.LaneNetCluster()
+        # self.postprocessor = lanenet_postprocess.LaneNetPostProcessor()
+        self.postprocessor = lanenet_postprocess.LaneNetPostProcessor(cfg=CFG, ipm_remap_file_path=CFG.DATASET.IPM_REMAP_YAML)
 
-        saver = tf.train.Saver()
+        # saver = tf.train.Saver()
+
         # Set sess configuration
         if self.use_gpu:
             sess_config = tf.ConfigProto(device_count={'GPU': 1})
         else:
             sess_config = tf.ConfigProto(device_count={'CPU': 0})
-        sess_config.gpu_options.per_process_gpu_memory_fraction = CFG.TEST.GPU_MEMORY_FRACTION
-        sess_config.gpu_options.allow_growth = CFG.TRAIN.TF_ALLOW_GROWTH
+
+        sess_config.gpu_options.per_process_gpu_memory_fraction = CFG.GPU.GPU_MEMORY_FRACTION # CFG.TEST.GPU_MEMORY_FRACTION
+        sess_config.gpu_options.allow_growth = CFG.GPU.TF_ALLOW_GROWTH # CFG.TRAIN.TF_ALLOW_GROWTH
         sess_config.gpu_options.allocator_type = 'BFC'
 
         self.sess = tf.Session(config=sess_config)
-        saver.restore(sess=self.sess, save_path=self.weight_path)
+
+        # define moving average version of the learned variables for eval
+        with tf.variable_scope(name_or_scope='moving_avg'):
+            variable_averages = tf.train.ExponentialMovingAverage(
+                CFG.SOLVER.MOVING_AVE_DECAY)
+            variables_to_restore = variable_averages.variables_to_restore()
+
+        saver = tf.train.Saver(variables_to_restore)
+
+        with self.sess.as_default():
+            saver.restore(sess=self.sess, save_path=self.weight_path)
 
     
     def img_callback(self, data):
@@ -100,13 +122,18 @@ class lanenet_detector():
             instance_seg_result=instance_seg_image[0],
             source_image=original_img
         )
+
         # mask_image = postprocess_result['mask_image']
+
+        for i in range(CFG.MODEL.EMBEDDING_FEATS_DIMS):
+            instance_seg_image[0][:, :, i] = self.minmax_scale(instance_seg_image[0][:, :, i])
+        # embedding_image = np.array(instance_seg_image[0], np.uint8)
+
         mask_image = postprocess_result
         mask_image = cv2.resize(mask_image, (original_img.shape[1],
                                                 original_img.shape[0]),interpolation=cv2.INTER_LINEAR)
         mask_image = cv2.addWeighted(original_img, 0.6, mask_image, 5.0, 0)
         return mask_image
-
 
     def minmax_scale(self, input_arr):
         """

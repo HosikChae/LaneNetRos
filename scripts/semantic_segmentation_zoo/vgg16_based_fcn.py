@@ -10,26 +10,29 @@ Implement VGG16 based fcn net for semantic segmentation
 """
 import collections
 
-import tensorflow as tf
+# import tensorflow as tf
+import tensorflow.compat.v1 as tf
+import tensorflow
+tf.disable_v2_behavior()
 
-from config import global_config
 from semantic_segmentation_zoo import cnn_basenet
-
-CFG = global_config.cfg
+from local_utils.config_utils import parse_config_utils
 
 
 class VGG16FCN(cnn_basenet.CNNBaseModel):
     """
     VGG 16 based fcn net for semantic segmentation
     """
-    def __init__(self, phase):
+    def __init__(self, phase, cfg):
         """
 
         """
         super(VGG16FCN, self).__init__()
+        self._cfg = cfg
         self._phase = phase
         self._is_training = self._is_net_for_training()
         self._net_intermediate_results = collections.OrderedDict()
+        self._class_nums = self._cfg.DATASET.NUM_CLASSES
 
     def _is_net_for_training(self):
         """
@@ -108,28 +111,8 @@ class VGG16FCN(cnn_basenet.CNNBaseModel):
 
             deconv = self.relu(inputdata=deconv, name='deconv_relu')
 
-            fuse_feats = tf.concat(
-                [previous_feats_tensor, deconv],
-                axis=-1, name='fuse_feats'
-            )
-
-            conv_weights_stddev = tf.sqrt(
-                tf.divide(tf.constant(2.0, tf.float32),
-                          tf.multiply(tf.cast(kernel_size * kernel_size, tf.float32),
-                                      tf.cast(tf.shape(fuse_feats)[3], tf.float32)))
-            )
-            conv_weights_init = tf.truncated_normal_initializer(
-                mean=0.0, stddev=conv_weights_stddev)
-
-            fuse_feats = self.conv2d(
-                inputdata=fuse_feats,
-                out_channel=out_channels_nums,
-                kernel_size=3,
-                padding='SAME',
-                stride=1,
-                w_init=conv_weights_init,
-                use_bias=use_bias,
-                name='fuse_conv'
+            fuse_feats = tf.add(
+                previous_feats_tensor, deconv, name='fuse_feats'
             )
 
             if need_activate:
@@ -325,10 +308,12 @@ class VGG16FCN(cnn_basenet.CNNBaseModel):
                     mean=0.0, stddev=binary_final_logits_conv_weights_stddev)
 
                 binary_final_logits = self.conv2d(
-                    inputdata=decode_stage_1_fuse, out_channel=CFG.TRAIN.CLASSES_NUMS,
+                    inputdata=decode_stage_1_fuse,
+                    out_channel=self._class_nums,
                     kernel_size=1, use_bias=False,
                     w_init=binary_final_logits_conv_weights_init,
-                    name='binary_final_logits')
+                    name='binary_final_logits'
+                )
 
                 self._net_intermediate_results['binary_segment_logits'] = {
                     'data': binary_final_logits,
@@ -386,7 +371,7 @@ if __name__ == '__main__':
     test code
     """
     test_in_tensor = tf.placeholder(dtype=tf.float32, shape=[1, 256, 512, 3], name='input')
-    model = VGG16FCN(phase='train')
+    model = VGG16FCN(phase='train', cfg=parse_config_utils.lanenet_cfg)
     ret = model.build_model(test_in_tensor, name='vgg16fcn')
     for layer_name, layer_info in ret.items():
         print('layer name: {:s} shape: {}'.format(layer_name, layer_info['shape']))
