@@ -8,10 +8,12 @@
 """
 实现一个基于DenseNet的编码器
 """
-# import tensorflow as tf
-import tensorflow.compat.v1 as tf
 import tensorflow
-tf.disable_v2_behavior()
+if int(tensorflow.__version__.split('.')[0]) == 1:
+    import tensorflow as tf
+else:
+    import tensorflow.compat.v1 as tf
+    tf.disable_v2_behavior()
 from collections import OrderedDict
 
 from encoder_decoder_model import cnn_basenet

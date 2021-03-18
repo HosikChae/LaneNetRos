@@ -10,10 +10,12 @@ BiseNet V2 Model
 """
 import collections
 
-# import tensorflow as tf
-import tensorflow.compat.v1 as tf
 import tensorflow
-tf.disable_v2_behavior()
+if int(tensorflow.__version__.split('.')[0]) == 1:
+    import tensorflow as tf
+else:
+    import tensorflow.compat.v1 as tf
+    tf.disable_v2_behavior()
 
 from semantic_segmentation_zoo import cnn_basenet
 from local_utils.config_utils import parse_config_utils

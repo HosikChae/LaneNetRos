@@ -13,6 +13,7 @@ import yaml
 import json
 import codecs
 from ast import literal_eval
+import pathlib
 
 
 class Config(dict):
@@ -223,7 +224,7 @@ class Config(dict):
 
 
 # lanenet_cfg = Config(config_path='./config/tusimple_lanenet.yaml')
-lanenet_cfg = Config(config_path='/home/pong0923/dev/proj/lane_detection/catkin_ws/src/LaneNetRos/scripts/config/tusimple_lanenet.yaml')
+lanenet_cfg = Config(config_path=str((pathlib.Path(__file__).parent.parent.parent / 'config' / 'tusimple_lanenet.yaml').absolute()))
 
 if __name__ == '__main__':
     """

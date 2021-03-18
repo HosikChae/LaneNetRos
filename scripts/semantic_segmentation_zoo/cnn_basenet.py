@@ -8,10 +8,12 @@
 """
 The base convolution neural networks mainly implement some useful cnn functions
 """
-# import tensorflow as tf
-import tensorflow.compat.v1 as tf
 import tensorflow
-tf.disable_v2_behavior()
+if int(tensorflow.__version__.split('.')[0]) == 1:
+    import tensorflow as tf
+else:
+    import tensorflow.compat.v1 as tf
+    tf.disable_v2_behavior()
 import numpy as np
 
 
@@ -66,7 +68,10 @@ class CNNBaseModel(object):
                     else [1, 1, stride, stride]
 
             if w_init is None:
-                w_init = tensorflow.keras.initializers.VarianceScaling(scale=2.0, mode='fan_in', distribution='untruncated_normal', seed=None) # w_init = tf.contrib.layers.variance_scaling_initializer()
+                if int(tensorflow.__version__.split('.')[0]) == 1:
+                    w_init = tf.contrib.layers.variance_scaling_initializer()
+                else:
+                    w_init = tensorflow.keras.initializers.VarianceScaling(scale=2.0, mode='fan_in', distribution='untruncated_normal', seed=None)
             if b_init is None:
                 b_init = tf.constant_initializer()
 
@@ -109,7 +114,11 @@ class CNNBaseModel(object):
             padding = padding.upper()
 
             depthwise_filter_shape = [kernel_size, kernel_size] + [in_channel, depth_multiplier]
-            w_init = tensorflow.keras.initializers.VarianceScaling(scale=2.0, mode='fan_in', distribution='untruncated_normal', seed=None) # w_init = tf.contrib.layers.variance_scaling_initializer()
+            if int(tensorflow.__version__.split('.')[0]) == 1:
+                w_init = tf.contrib.layers.variance_scaling_initializer()
+            else:
+                w_init = tensorflow.keras.initializers.VarianceScaling(scale=2.0, mode='fan_in',
+                                                                       distribution='untruncated_normal', seed=None)
 
             depthwise_filter = tf.get_variable(
                 name='depthwise_filter_w', shape=depthwise_filter_shape,
@@ -331,7 +340,11 @@ class CNNBaseModel(object):
             inputdata = tf.reshape(inputdata, tf.stack([tf.shape(inputdata)[0], -1]))
 
         if w_init is None:
-            w_init = tensorflow.keras.initializers.VarianceScaling(scale=2.0, mode='fan_in', distribution='untruncated_normal', seed=None) # w_init = tf.contrib.layers.variance_scaling_initializer()
+            if int(tensorflow.__version__.split('.')[0]) == 1:
+                w_init = tf.contrib.layers.variance_scaling_initializer()
+            else:
+                w_init = tensorflow.keras.initializers.VarianceScaling(scale=2.0, mode='fan_in',
+                                                                       distribution='untruncated_normal', seed=None)
         if b_init is None:
             b_init = tf.constant_initializer()
 
@@ -426,7 +439,11 @@ class CNNBaseModel(object):
             padding = padding.upper()
 
             if w_init is None:
-                w_init = tensorflow.keras.initializers.VarianceScaling(scale=2.0, mode='fan_in', distribution='untruncated_normal', seed=None) # w_init = tf.contrib.layers.variance_scaling_initializer()
+                if int(tensorflow.__version__.split('.')[0]) == 1:
+                    w_init = tf.contrib.layers.variance_scaling_initializer()
+                else:
+                    w_init = tensorflow.keras.initializers.VarianceScaling(scale=2.0, mode='fan_in',
+                                                                           distribution='untruncated_normal', seed=None)
             if b_init is None:
                 b_init = tf.constant_initializer()
 
@@ -469,7 +486,11 @@ class CNNBaseModel(object):
                 filter_shape = [k_size, k_size] + [in_channel, out_dims]
 
             if w_init is None:
-                w_init = tensorflow.keras.initializers.VarianceScaling(scale=2.0, mode='fan_in', distribution='untruncated_normal', seed=None) # w_init = tf.contrib.layers.variance_scaling_initializer()
+                if int(tensorflow.__version__.split('.')[0]) == 1:
+                    w_init = tf.contrib.layers.variance_scaling_initializer()
+                else:
+                    w_init = tensorflow.keras.initializers.VarianceScaling(scale=2.0, mode='fan_in',
+                                                                           distribution='untruncated_normal', seed=None)
             if b_init is None:
                 b_init = tf.constant_initializer()
 

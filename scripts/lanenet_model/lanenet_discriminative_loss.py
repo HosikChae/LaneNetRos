@@ -8,10 +8,12 @@
 """
 Discriminative Loss for instance segmentation
 """
-# import tensorflow as tf
-import tensorflow.compat.v1 as tf
 import tensorflow
-tf.disable_v2_behavior()
+if int(tensorflow.__version__.split('.')[0]) == 1:
+    import tensorflow as tf
+else:
+    import tensorflow.compat.v1 as tf
+    tf.disable_v2_behavior()
 
 
 def discriminative_loss_single(

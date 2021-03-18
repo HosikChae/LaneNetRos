@@ -1,6 +1,6 @@
 AUG:
     RESIZE_METHOD: 'stepscaling' # choice unpadding rangescaling and stepscaling
-    FIX_RESIZE_SIZE: [360, 360] # [720, 720] # (width, height), for unpadding
+    FIX_RESIZE_SIZE: [720, 720] # (width, height), for unpadding
     INF_RESIZE_VALUE: 500  # for rangescaling
     MAX_RESIZE_VALUE: 600  # for rangescaling
     MIN_RESIZE_VALUE: 400  # for rangescaling
@@ -24,13 +24,13 @@ AUG:
         CONTRAST_JITTER_RATIO: 0.5
         SATURATION_JITTER_RATIO: 0.5
 DATASET:
-    IPM_REMAP_YAML: '/home/pong0923/dev/proj/lane_detection/catkin_ws/src/LaneNetRos/data/tusimple_ipm_remap.yml'
-    DATA_DIR: '/home/pong0923/dev/proj/lane_detection/catkin_ws/src/LaneNetRos/data/training_data_example/'
+    IPM_REMAP_YAML: '/home/pong0923/dev/proj/lane_detection/catkin_ws/src/lane_detector/data/tusimple_ipm_remap.yml'
+    DATA_DIR: '/home/pong0923/dev/proj/lane_detection/catkin_ws/src/lane_detector/data/training_data_example/'
     IMAGE_TYPE: 'rgb'  # choice rgb or rgba
     NUM_CLASSES: 2
-    TEST_FILE_LIST: '/home/pong0923/dev/proj/lane_detection/catkin_ws/src/LaneNetRos/data/training_data_example/test.txt'
-    TRAIN_FILE_LIST: '/home/pong0923/dev/proj/lane_detection/catkin_ws/src/LaneNetRos/data/training_data_example/train.txt'
-    VAL_FILE_LIST: '/home/pong0923/dev/proj/lane_detection/catkin_ws/src/LaneNetRos/data/training_data_example/val.txt'
+    TEST_FILE_LIST: '/home/pong0923/dev/proj/lane_detection/catkin_ws/src/lane_detector/data/training_data_example/test.txt'
+    TRAIN_FILE_LIST: '/home/pong0923/dev/proj/lane_detection/catkin_ws/src/lane_detector/data/training_data_example/train.txt'
+    VAL_FILE_LIST: '/home/pong0923/dev/proj/lane_detection/catkin_ws/src/lane_detector/data/training_data_example/val.txt'
     IGNORE_INDEX: 255
     PADDING_VALUE: [127.5, 127.5, 127.5]
     MEAN_VALUE: [0.5, 0.5, 0.5]
@@ -86,7 +86,7 @@ SOLVER:
         SCORE_THRESH: 0.65
         MIN_SAMPLE_NUMS: 65536
 GPU:
-    GPU_MEMORY_FRACTION: 0.9
+    GPU_MEMORY_FRACTION: 0.5
     TF_ALLOW_GROWTH: True
 POSTPROCESS:
     MIN_AREA_THRESHOLD: 100

@@ -8,10 +8,15 @@
 import pdb
 import time
 import math
-# import tensorflow as tf
-import tensorflow.compat.v1 as tf
+import os
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' # ('0':DEBUG, '1':INFO, '2':WARNING, '3':ERROR)
 import tensorflow
-tf.disable_v2_behavior()
+if int(tensorflow.__version__.split('.')[0]) == 1:
+    import tensorflow as tf
+else:
+    import tensorflow.compat.v1 as tf
+    tf.disable_v2_behavior()
 import numpy as np
 import cv2
 
@@ -27,7 +32,7 @@ from std_msgs.msg import Header
 from cv_bridge import CvBridge, CvBridgeError
 from lane_detector.msg import Lane_Image
 
-
+import matplotlib.pyplot as plt
 # CFG = global_config.cfg
 CFG = parse_config_utils.lanenet_cfg
 LOG = init_logger.get_logger(log_file_name_prefix='lanenet_ros')
@@ -44,9 +49,12 @@ class lanenet_detector():
         self.init_lanenet()
         self.bridge = CvBridge()
         sub_image = rospy.Subscriber(self.image_topic, Image, self.img_callback, queue_size=1)
-        self.pub_image = rospy.Publisher(self.output_image, Image, queue_size=1)
-        self.pub_laneimage = rospy.Publisher(self.lane_image_topic, Lane_Image, queue_size=1)
+        self.pub_image = rospy.Publisher(self.output_image, Image, queue_size=1)    # /lane_images
+        # self.pub_laneimage = rospy.Publisher(self.lane_image_topic, Lane_Image, queue_size=1) # /lane_image
 
+
+        # self.test_lanenet(image_path="/home/pong0923/dev/proj/lane_detection/catkin_ws/src/LaneNetRos/data/tusimple_test_image/0.jpg",
+        #                   weights_path="/home/pong0923/dev/proj/lane_detection/catkin_ws/src/LaneNetRos/model/new_model/tusimple_lanenet.ckpt")
     
     def init_lanenet(self):
         '''
@@ -104,7 +112,7 @@ class lanenet_detector():
         mask_image = self.inference_net(resized_image, original_img)
         out_img_msg = self.bridge.cv2_to_imgmsg(mask_image, "bgr8")
         self.pub_image.publish(out_img_msg)
-        
+
     def preprocessing(self, img):
         image = cv2.resize(img, (512, 256), interpolation=cv2.INTER_LINEAR)
         image = image / 127.5 - 1.0
@@ -123,16 +131,17 @@ class lanenet_detector():
             source_image=original_img
         )
 
-        # mask_image = postprocess_result['mask_image']
+        mask_image = postprocess_result['mask_image']
 
         for i in range(CFG.MODEL.EMBEDDING_FEATS_DIMS):
             instance_seg_image[0][:, :, i] = self.minmax_scale(instance_seg_image[0][:, :, i])
         # embedding_image = np.array(instance_seg_image[0], np.uint8)
 
-        mask_image = postprocess_result
+        # mask_image = postprocess_result
+        # pdb.set_trace()
         mask_image = cv2.resize(mask_image, (original_img.shape[1],
                                                 original_img.shape[0]),interpolation=cv2.INTER_LINEAR)
-        mask_image = cv2.addWeighted(original_img, 0.6, mask_image, 5.0, 0)
+        # mask_image = cv2.addWeighted(original_img, 0.6, mask_image, 5.0, 0)
         return mask_image
 
     def minmax_scale(self, input_arr):
@@ -148,8 +157,7 @@ class lanenet_detector():
 
         return output_arr
 
-
-
+    
 if __name__ == '__main__':
     # init args
     rospy.init_node('lanenet_node')
